@@ -80,6 +80,24 @@ async function run() {
         .send({ success: true });
     });
 
+    // =============================
+    //  College Routes
+    // =============================
+
+    // Get all colleges
+    app.get("/colleges", async (req, res) => {
+      const result = await collegeCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Search college by name (optional: ?search=Name)
+    app.get("/search-college", async (req, res) => {
+      const search = req.query.search;
+      const query = search ? { name: { $regex: search, $options: "i" } } : {};
+      const result = await collegeCollection.find(query).toArray();
+      res.send(result);
+    });
+
     console.log("Connected to collegeFlowDB successfully");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
