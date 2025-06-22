@@ -81,7 +81,7 @@ async function run() {
     });
 
     // =============================
-    //  College Routes
+    // College Routes
     // =============================
 
     // Get all colleges
@@ -102,6 +102,26 @@ async function run() {
     app.get("/college/:id", async (req, res) => {
       const id = req.params.id;
       const result = await collegeCollection.findOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    // =============================
+    // Admission Routes
+    // =============================
+
+    app.post("/add-admission", verifyToken, async (req, res) => {
+      const data = req.body;
+      const result = await admissionCollection.insertOne(data);
+      res.send(result);
+    });
+
+    app.get("/admissions/:email", verifyToken, async (req, res) => {
+      const decodedEmail = req.user?.email;
+      const email = req.params.email;
+      if (decodedEmail !== email)
+        return res.status(401).send({ message: "unauthorized access" });
+
+      const result = await admissionCollection.find({ email }).toArray();
       res.send(result);
     });
 
