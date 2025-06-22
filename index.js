@@ -98,6 +98,13 @@ async function run() {
       res.send(result);
     });
 
+    // Get single college
+    app.get("/college/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await collegeCollection.findOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
     console.log("Connected to collegeFlowDB successfully");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
