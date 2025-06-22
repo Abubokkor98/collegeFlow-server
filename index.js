@@ -33,6 +33,13 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const collegeCollection = client.db("collegeFlowDB").collection("colleges");
+    const admissionCollection = client
+      .db("collegeFlowDB")
+      .collection("admissions");
+    const reviewCollection = client.db("collegeFlowDB").collection("reviews");
+    const userCollection = client.db("collegeFlowDB").collection("users");
+
     console.log("Connected to collegeFlowDB successfully");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
