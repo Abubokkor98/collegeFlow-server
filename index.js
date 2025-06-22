@@ -125,6 +125,21 @@ async function run() {
       res.send(result);
     });
 
+    // =============================
+    // Review Routes
+    // =============================
+
+    app.post("/add-review", verifyToken, async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
+      res.send(result);
+    });
+
+    app.get("/reviews", async (req, res) => {
+      const result = await reviewCollection.find().sort({ _id: -1 }).toArray();
+      res.send(result);
+    });
+
     console.log("Connected to collegeFlowDB successfully");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
