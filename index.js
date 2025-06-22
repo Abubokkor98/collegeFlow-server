@@ -68,6 +68,18 @@ async function run() {
         .send({ success: true });
     });
 
+    // Logout
+    app.get("/logout", async (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          maxAge: 0,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+
     console.log("Connected to collegeFlowDB successfully");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
