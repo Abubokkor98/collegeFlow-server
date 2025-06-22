@@ -52,6 +52,22 @@ async function run() {
     const reviewCollection = client.db("collegeFlowDB").collection("reviews");
     const userCollection = client.db("collegeFlowDB").collection("users");
 
+    // JWT
+    app.post("/jwt", async (req, res) => {
+      const email = req.body;
+      const token = jwt.sign(email, process.env.SECRET_KEY, {
+        expiresIn: "1d",
+      });
+
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+
     console.log("Connected to collegeFlowDB successfully");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
