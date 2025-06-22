@@ -140,6 +140,28 @@ async function run() {
       res.send(result);
     });
 
+    // =============================
+    // User Profile Routes
+    // =============================
+
+    app.get("/user/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const result = await userCollection.findOne({ email });
+      res.send(result);
+    });
+
+    app.put("/user/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const userInfo = req.body;
+
+      const result = await userCollection.updateOne(
+        { email },
+        { $set: userInfo },
+        { upsert: true }
+      );
+      res.send(result);
+    });
+
     console.log("Connected to collegeFlowDB successfully");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
