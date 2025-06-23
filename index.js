@@ -73,6 +73,7 @@ async function run() {
     const reviewCollection = client.db("collegeFlowDB").collection("reviews");
     const userCollection = client.db("collegeFlowDB").collection("users");
 
+    //TODO: i didnot test this JWT validation yet beacuse of time, i will test and properly implement it later
     // JWT
     // app.post("/jwt", async (req, res) => {
     //   const email = req.body;
@@ -91,9 +92,9 @@ async function run() {
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.SECRET_KEY, {
-        expiresIn: "1h", // Standard practice
+        expiresIn: "1h",
       });
-      res.send({ token }); // Send token in response body
+      res.send({ token });
     });
 
     // Logout
@@ -164,21 +165,13 @@ async function run() {
       res.send(result);
     });
 
-    // app.get("/admissions/:email", verifyToken, async (req, res) => {
-    //   const decodedEmail = req.user?.email;
-    //   const email = req.params.email;
-    //   if (decodedEmail !== email)
-    //     return res.status(401).send({ message: "unauthorized access" });
-
-    //   const result = await admissionCollection.find({ email }).toArray();
-    //   res.send(result);
-    // });
-
-  app.get("/my-admissions", verifyToken, async (req, res) => {
-  const email = req.user.email; // Get email from token
-  const result = await admissionCollection.find({ candidate_email: email }).toArray();
-  res.send(result);
-});
+    app.get("/my-admissions", verifyToken, async (req, res) => {
+      const email = req.user.email; // Get email from token
+      const result = await admissionCollection
+        .find({ candidate_email: email })
+        .toArray();
+      res.send(result);
+    });
 
     // =============================
     // Review Routes
