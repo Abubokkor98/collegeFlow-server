@@ -4,7 +4,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
@@ -13,20 +13,41 @@ const port = process.env.PORT || 5000;
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: ["https://college-flow.vercel.app", "http://localhost:5173"],
     credentials: true,
   })
 );
+
 app.use(express.json());
-app.use(cookieParser());
+// app.use(cookieParser());
 
 // JWT verify middleware
+// const verifyToken = (req, res, next) => {
+//   const token = req.cookies?.token;
+//   if (!token) return res.status(401).send({ message: "unauthorized access" });
+
+//   jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+//     if (err) return res.status(401).send({ message: "unauthorized access" });
+//     req.user = decoded;
+//     next();
+//   });
+// };
+
 const verifyToken = (req, res, next) => {
-  const token = req.cookies?.token;
-  if (!token) return res.status(401).send({ message: "unauthorized access" });
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
 
   jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
-    if (err) return res.status(401).send({ message: "unauthorized access" });
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
+    }
     req.user = decoded;
     next();
   });
@@ -53,19 +74,26 @@ async function run() {
     const userCollection = client.db("collegeFlowDB").collection("users");
 
     // JWT
-    app.post("/jwt", async (req, res) => {
-      const email = req.body;
-      const token = jwt.sign(email, process.env.SECRET_KEY, {
-        expiresIn: "1d",
-      });
+    // app.post("/jwt", async (req, res) => {
+    //   const email = req.body;
+    //   const token = jwt.sign(email, process.env.SECRET_KEY, {
+    //     expiresIn: "1d",
+    //   });
 
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        })
-        .send({ success: true });
+    //   res
+    //     .cookie("token", token, {
+    //       httpOnly: true,
+    //       secure: process.env.NODE_ENV === "production",
+    //       sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    //     })
+    //     .send({ success: true });
+    // });
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.SECRET_KEY, {
+        expiresIn: "1h", // Standard practice
+      });
+      res.send({ token }); // Send token in response body
     });
 
     // Logout
@@ -105,6 +133,27 @@ async function run() {
       res.send(result);
     });
 
+    // Get gallery images from all colleges
+    app.get("/gallery-images", async (req, res) => {
+      const colleges = await collegeCollection.find().toArray();
+      const galleryImages = colleges.flatMap(
+        (college) => college.gallery || []
+      );
+      res.send(galleryImages);
+    });
+
+    // Get research papers from all colleges
+    app.get("/research-papers", async (req, res) => {
+      const colleges = await collegeCollection.find().toArray();
+      const researchPapers = colleges.flatMap((college) =>
+        (college.researchPapers || []).map((paper) => ({
+          ...paper,
+          collegeName: college.name,
+        }))
+      );
+      res.send(researchPapers);
+    });
+
     // =============================
     // Admission Routes
     // =============================
@@ -115,15 +164,21 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/admissions/:email", verifyToken, async (req, res) => {
-      const decodedEmail = req.user?.email;
-      const email = req.params.email;
-      if (decodedEmail !== email)
-        return res.status(401).send({ message: "unauthorized access" });
+    // app.get("/admissions/:email", verifyToken, async (req, res) => {
+    //   const decodedEmail = req.user?.email;
+    //   const email = req.params.email;
+    //   if (decodedEmail !== email)
+    //     return res.status(401).send({ message: "unauthorized access" });
 
-      const result = await admissionCollection.find({ email }).toArray();
-      res.send(result);
-    });
+    //   const result = await admissionCollection.find({ email }).toArray();
+    //   res.send(result);
+    // });
+
+  app.get("/my-admissions", verifyToken, async (req, res) => {
+  const email = req.user.email; // Get email from token
+  const result = await admissionCollection.find({ candidate_email: email }).toArray();
+  res.send(result);
+});
 
     // =============================
     // Review Routes
@@ -143,6 +198,18 @@ async function run() {
     // =============================
     // User Profile Routes
     // =============================
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      // check if user exists
+      const query = { email: user.email };
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "user already exists", insertedId: null });
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
 
     app.get("/user/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
