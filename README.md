@@ -164,4 +164,4 @@ This project is licensed under the ISC License.
 
 **Version**: 1.0.0  
 **Last Updated**: June 2025  
-**Maintained by**: CollegeFlow Development Team
+**Maintained by**: Abu Bokkor Siddik
